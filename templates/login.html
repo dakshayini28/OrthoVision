@@ -52,13 +52,22 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarCollapse">
                     <div class="navbar-nav ms-auto py-0 font-open-sans">
-                        <a href="{{url_for('first')}}" class="nav-item nav-link">Home</a>
-                        <a href="{{url_for('login')}}" class="nav-item nav-link">Login</a>
-                        <a href="{{url_for('register')}}" class="nav-item nav-link">Register</a>
-                    
+                        <!-- <a href="{{url_for('first')}}" class="nav-item nav-link">Home</a> -->
+                        <a href="{{url_for('index')}}" class="nav-item nav-link">Preview</a>
+        
+                        <!-- DROPDOWN for Model Analysis -->
+                        <div class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Model Analysis</a>
+                            <div class="dropdown-menu m-0">
+                                <a href="{{url_for('performance')}}" class="dropdown-item">Performance Analysis</a>
+                                <a href="{{url_for('chart')}}" class="dropdown-item">Chart</a>
+                            </div>
+                        </div>
+                        <div><a href="{{url_for('profile')}}" class="nav-item nav-link" >Profile</a></div>
+                        <div><a href="{{url_for('first')}}" class="nav-item nav-link" onclick="logout()">Logout</a></div>
                     </div>
-                   
                      
+                       
                 </div>
             </nav>
 
@@ -113,12 +122,16 @@
                         const result = await response.json();
                     
                         if (result.status === "success") {
+                            // Save user details in local storage after successful login
+                            localStorage.setItem("user", JSON.stringify(result.user));
+                            
                             alert(result.message);
-                            window.location.href = "/index";
+                            window.location.href = "/index"; // Redirect to the main page
                         } else {
-                            alert(result.message);
+                            alert(result.message); // Display error message if login fails
                         }
                     }
+                    
                     
                       
             

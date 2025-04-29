@@ -52,20 +52,21 @@
                 <div class="collapse navbar-collapse" id="navbarCollapse">
                     <div class="navbar-nav ms-auto py-0 font-open-sans">
                         <!-- <a href="{{url_for('first')}}" class="nav-item nav-link">Home</a> -->
-                      
                         <a href="{{url_for('index')}}" class="nav-item nav-link">Preview</a>
+        
                         <!-- DROPDOWN for Model Analysis -->
-                      <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Model Analysis</a>
-                        <div class="dropdown-menu m-0">
-                            <a href="{{url_for('performance')}}" class="dropdown-item">Performance Analysis</a>
-                            <a href="{{url_for('chart')}}" class="dropdown-item">Chart</a>
+                        <div class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Model Analysis</a>
+                            <div class="dropdown-menu m-0">
+                                <a href="{{url_for('performance')}}" class="dropdown-item">Performance Analysis</a>
+                                <a href="{{url_for('chart')}}" class="dropdown-item">Chart</a>
+                            </div>
                         </div>
+                        <div><a href="{{url_for('profile')}}" class="nav-item nav-link" >Profile</a></div>
+                        <div><a href="{{url_for('first')}}" class="nav-item nav-link" onclick="logout()">Logout</a></div>
                     </div>
-                        <a href="{{url_for('first')}}" class="nav-item nav-link">Logout</a>
-                    </div>
-                   
                      
+                       
                 </div>
             </nav>
 
@@ -177,6 +178,12 @@
 
     <!-- Template Javascript -->
     <script src="../static/js/main.js"></script>
+    <script>
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login';  // Redirect to login page after logout
+        }
+        </script>
     </body>
 
 </html>

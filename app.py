@@ -6,6 +6,7 @@ from tensorflow.keras.preprocessing import image
 import numpy as np
 import json
 import os
+from db import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -44,11 +45,23 @@ def predict_labels(img_path):
 
 USERS_FILE = 'users.json'
 
-def load_users():
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r') as file:
-            return json.load(file)
-    return {}
+# def load_users():
+#     if os.path.exists(USERS_FILE):
+#         with open(USERS_FILE, 'r') as file:
+#             return json.load(file)
+#     return {}
+def get_user_from_db(uname):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Query the database to get the user based on the username
+    cursor.execute("SELECT * FROM users WHERE uname = %s", (uname,))
+    user = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return user
 
 def save_users(users):
     with open(USERS_FILE, 'w') as file:
@@ -66,37 +79,87 @@ def login():
 @app.route('/register')
 def register():
     return render_template('register.html')
+
+@app.route('/profile')
+def profile():
+    return render_template('profile.html')
+
 @app.route('/login', methods=['POST'])
 def login_user():
     data = request.get_json()
-    users = load_users()
+    # users = load_users()
 
-    user = users.get(data['uname'])
-    if user and check_password_hash(user['password'], data['pwd']):
-        return jsonify({'status': 'success', 'message': 'Login successful'})
+    user = get_user_from_db(data['uname'])
+
+    if user and check_password_hash(user['password_hash'], data['pwd']):
+        user_data = {
+            'uname': user['uname'],
+            'email': user['email'],
+            'age': user['age'],
+            'gender': user['gender']
+        }
+        return jsonify({'status': 'success', 'message': 'Login successful','user':user_data})
     return jsonify({'status': 'fail', 'message': 'Invalid credentials'}), 401
+# def login_user():
+#     data = request.get_json()
+#     users = load_users()
 
+#     user = users.get(data['uname'])
+#     if user and check_password_hash(user['password'], data['pwd']):
+#         return jsonify({'status': 'success', 'message': 'Login successful'})
+#     return jsonify({'status': 'fail', 'message': 'Invalid credentials'}), 401
+
+# @app.route('/register', methods=['GET', 'POST'])
+# def register_user():
+#     if request.method == 'POST':
+#         data = request.get_json()  # Get JSON data from the request
+#         users = load_users()
+
+#         if data['uname'] in users:
+#             return jsonify({'status': 'fail', 'message': 'Username already exists'}), 400  # 400 instead of 404
+
+#         users[data['uname']] = {
+#             'email': data['email'],
+#             'age': data['age'],
+#             'gender': data['gender'],
+#             'password': generate_password_hash(data['pwd'])
+#         }
+
+#         save_users(users)
+#         return jsonify({'status': 'success', 'message': 'Registered successfully'})
+    
+#     # Handle GET request if necessary (just to render the registration page)
+#     return render_template('register.html')
 @app.route('/register', methods=['GET', 'POST'])
 def register_user():
     if request.method == 'POST':
         data = request.get_json()  # Get JSON data from the request
-        users = load_users()
+        uname = data['uname']
+        email = data['email']
+        age = data['age']
+        gender = data['gender']
+        password = generate_password_hash(data['pwd'])
 
-        if data['uname'] in users:
-            return jsonify({'status': 'fail', 'message': 'Username already exists'}), 400  # 400 instead of 404
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-        users[data['uname']] = {
-            'email': data['email'],
-            'age': data['age'],
-            'gender': data['gender'],
-            'password': generate_password_hash(data['pwd'])
-        }
+        cursor.execute("SELECT * FROM users WHERE uname = %s", (uname,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'status': 'fail', 'message': 'Username already exists'}), 400
 
-        save_users(users)
+        cursor.execute(
+            "INSERT INTO users (uname, email, age, gender, password_hash) VALUES (%s, %s, %s, %s, %s)",
+            (uname, email, age, gender, password)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
         return jsonify({'status': 'success', 'message': 'Registered successfully'})
-    
-    # Handle GET request if necessary (just to render the registration page)
-    return render_template('register.html')
+    else:
+        return render_template('register.html')
 
 @app.route("/chart")
 def chart():

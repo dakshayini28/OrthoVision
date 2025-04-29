@@ -62,8 +62,8 @@
                               <a href="{{url_for('chart')}}" class="dropdown-item">Chart</a>
                           </div>
                       </div>
-      
-                      <a href="{{url_for('first')}}" class="nav-item nav-link">Logout</a>
+                      <div><a href="{{url_for('profile')}}" class="nav-item nav-link" >Profile</a></div>
+                      <div><a href="{{url_for('first')}}" class="nav-item nav-link" onclick="logout()">Logout</a></div>
                   </div>
                    
                      
@@ -237,6 +237,12 @@
 
     <!-- Template Javascript -->
     <script src="../static/js/main.js"></script>
+    <script>
+      function logout() {
+          localStorage.removeItem('user');
+          window.location.href = '/login';  // Redirect to login page after logout
+      }
+      </script>
     </body>
 
 </html>
