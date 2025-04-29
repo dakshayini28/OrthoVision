@@ -5,8 +5,9 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
 import json
-import os
 from db import get_db_connection
+from datetime import datetime
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -173,14 +174,40 @@ def performance():
 def index():
     return render_template("index.html")
 
+# @app.route("/submit", methods=['GET', 'POST'])
+# def get_output():
+#     if request.method == 'POST':
+#         img = request.files.get('my_image')
+#         model = request.form.get('model')
+        
+#         # Ensure both image and model were provided
+#         if img and model:
+#             img_path = "static/tests/" + img.filename	
+#             img.save(img_path)
+
+#             if model == 'VGG16':
+#                 predict_result = predict_label(img_path)
+#             elif model == 'MobileNetV2':
+#                 predict_result = predict_labels(img_path)
+#             else:
+#                 predict_result = "Unknown model selected"
+            
+#             return render_template("result.html", prediction=predict_result, img_path=img_path, model=model)
+        
+#         # Handle case if image or model is missing
+#         return "Image or model selection is missing. Please try again.", 400  # 400: Bad Request
+    
+#     # Fallback if the request method is not POST
+#     return "Invalid request method. Please submit the form correctly.", 405  # 405: Method Not Allowed
+
 @app.route("/submit", methods=['GET', 'POST'])
 def get_output():
     if request.method == 'POST':
         img = request.files.get('my_image')
         model = request.form.get('model')
-        
-        # Ensure both image and model were provided
-        if img and model:
+        uname = request.form.get('username')  # Should be passed from frontend (e.g. JS localStorage)
+
+        if img and model and uname:
             img_path = "static/tests/" + img.filename	
             img.save(img_path)
 
@@ -190,14 +217,43 @@ def get_output():
                 predict_result = predict_labels(img_path)
             else:
                 predict_result = "Unknown model selected"
-            
+
+            # Insert prediction into DB
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO prediction_history (uname, image_name, prediction, model_used, predicted_at)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (uname, img.filename, predict_result, model, datetime.now()))
+            conn.commit()
+            cursor.close()
+            conn.close()
+
             return render_template("result.html", prediction=predict_result, img_path=img_path, model=model)
-        
-        # Handle case if image or model is missing
-        return "Image or model selection is missing. Please try again.", 400  # 400: Bad Request
-    
-    # Fallback if the request method is not POST
-    return "Invalid request method. Please submit the form correctly.", 405  # 405: Method Not Allowed
+
+        return "Missing required data", 400
+    return "Invalid request", 405
+
+
+@app.route('/get_prediction_history/<uname>')
+def get_prediction_history(uname):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT image_name, prediction, model_used,predicted_at
+        FROM prediction_history
+        WHERE uname = %s
+        ORDER BY predicted_at DESC
+    """
+    cursor.execute(query, (uname,))
+    results = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(results)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

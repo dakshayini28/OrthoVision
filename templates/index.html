@@ -142,8 +142,8 @@
                    </div>
            </br>
                </br>
-                   <form class="login100-form validate-form" action="/submit" method="POST" enctype="multipart/form-data">
-                     <div class="wrap-input100 validate-input m-b-26" data-validate="Username is required">
+               <form class="login100-form validate-form" action="/submit" method="POST" enctype="multipart/form-data" onsubmit="addUsernameToForm(event)">
+                <div class="wrap-input100 validate-input m-b-26" data-validate="Username is required">
                  <br>
                        <input class="input100" type="file" name="my_image" id="imagefile" class="btn" accept="image/*" onchange="previewImage();"  required>
               
@@ -243,6 +243,22 @@
           window.location.href = '/login';  // Redirect to login page after logout
       }
       </script>
+      <script>
+        function addUsernameToForm(event) {
+            const userData = JSON.parse(localStorage.getItem('user')); // parse the string to object
+            const username = userData?.uname; // optional chaining to safely access uname
+            if (username) {
+                // Create hidden input for username
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "username"; // This will be accessible as request.form['username'] in Flask
+                input.value = username;
+      
+                event.target.appendChild(input); // `event.target` is the form element
+            }
+        }
+      </script>
+      
     </body>
 
 </html>
