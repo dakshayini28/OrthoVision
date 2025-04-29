@@ -27,6 +27,7 @@
 
         <!-- Template Stylesheet -->
         <link href="../static/css/login.css" rel="stylesheet">
+    
     </head>
 
     <body>
@@ -53,6 +54,7 @@
                     <div class="navbar-nav ms-auto py-0 font-open-sans">
                         <a href="{{url_for('first')}}" class="nav-item nav-link">Home</a>
                         <a href="{{url_for('login')}}" class="nav-item nav-link">Login</a>
+                        <a href="{{url_for('register')}}" class="nav-item nav-link">Register</a>
                     
                     </div>
                    
@@ -83,7 +85,7 @@
             <div class="container py-5">
                 <div class="text-center mx-auto pb-5 wow fadeInUp" data-wow-delay="0.2s" style="max-width: 800px;">
                     <h4 class="text-uppercase text-primary">Automated Knee Osteoarthritis Prediction and Classification from X-ray Images Using Deep Learning</h4>
-                    <h1 class="display-3 text-capitalize mb-3">Login</h1>
+                    <h3 class="display-6 text-capitalize mb-3">Login</h3>
                 </div>
                 
 
@@ -98,21 +100,24 @@
                         window.scrollTo(0, 1);
                     }
             
-                    function login(){
-                    var uname = document.getElementById("uname").value;
-                    var pwd = document.getElementById("pwd").value;
-            
-                if(uname == "admin" && pwd == "admin")
-                {
-                  alert("Login Success!");
-                  
-                  window.location = "{{url_for('index')}}";
-                  return false;
-                }
-                else
-                {
-                alert("Invalid Credentials!")
-                }
+                    async function login() {
+                        const uname = document.getElementById("uname").value;
+                        const pwd = document.getElementById("pwd").value;
+                    
+                        const response = await fetch("/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ uname, pwd })
+                        });
+                    
+                        const result = await response.json();
+                    
+                        if (result.status === "success") {
+                            alert(result.message);
+                            window.location.href = "/index";
+                        } else {
+                            alert(result.message);
+                        }
                     }
                     
                       
@@ -138,32 +143,24 @@
                      
                     <!-- Icon Divider -->
                   
-              <h2> </h2>                    
-              <div class="row justify-content-center">
+                    <div class="row justify-content-center">
                         <div class="col-md-6 col-lg-4">
                             <div class="control-group mb-3">
                                 <label for="username"><b>Username</b></label>
                                 <input type="text" id="uname" name="uname" class="form-control">
                             </div>
-                            </br>
-            
+                    
                             <div class="control-group mb-3">
                                 <label for="password"><b>Password</b></label>
                                 <input type="password" id="pwd" name="pwd" class="form-control">
                             </div>
-                             <div class="col-md-6 col-lg-4" style="margin-left:-150px">
-                            <div class="control-group">
-                              <!-- Button -->
-                              <br>
-                              <div class="controls">
-            
-                                <input type="button" class="btn btn-primary" value="Login" style="margin-left: 260px" onclick="login()">
-                              
-                              </div>
+                    
+                            <div class="text-center">
+                                <input type="button" class="btn btn-primary" value="Login" onclick="login()">
                             </div>
                         </div>
                     </div>
-                </div>
+                    
              
              
             </section>

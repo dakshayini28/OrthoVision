@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request,jsonify
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
+import json
+import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
@@ -38,6 +41,19 @@ def predict_labels(img_path):
     classes_x = np.argmax(predict_x, axis=1)
     return verbose_name[classes_x[0]]
 
+
+USERS_FILE = 'users.json'
+
+def load_users():
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r') as file:
+            return json.load(file)
+    return {}
+
+def save_users(users):
+    with open(USERS_FILE, 'w') as file:
+        json.dump(users, file, indent=4)
+        
 @app.route("/")
 @app.route("/first")
 def first():
@@ -46,6 +62,41 @@ def first():
 @app.route("/login")
 def login():
     return render_template('login.html')    
+
+@app.route('/register')
+def register():
+    return render_template('register.html')
+@app.route('/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    users = load_users()
+
+    user = users.get(data['uname'])
+    if user and check_password_hash(user['password'], data['pwd']):
+        return jsonify({'status': 'success', 'message': 'Login successful'})
+    return jsonify({'status': 'fail', 'message': 'Invalid credentials'}), 401
+
+@app.route('/register', methods=['GET', 'POST'])
+def register_user():
+    if request.method == 'POST':
+        data = request.get_json()  # Get JSON data from the request
+        users = load_users()
+
+        if data['uname'] in users:
+            return jsonify({'status': 'fail', 'message': 'Username already exists'}), 400  # 400 instead of 404
+
+        users[data['uname']] = {
+            'email': data['email'],
+            'age': data['age'],
+            'gender': data['gender'],
+            'password': generate_password_hash(data['pwd'])
+        }
+
+        save_users(users)
+        return jsonify({'status': 'success', 'message': 'Registered successfully'})
+    
+    # Handle GET request if necessary (just to render the registration page)
+    return render_template('register.html')
 
 @app.route("/chart")
 def chart():
